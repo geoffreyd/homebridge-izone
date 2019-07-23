@@ -1,0 +1,14 @@
+{
+  "name": "izone",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Geoffrey Donaldson",
+  "license": "MIT",
+  "engines": {
+    "node": "11"
+  },
+  "devDependencies": {
+    "@types/node": "^12.6.3",
+    "typescript": "^3.5.3"
+  }
+}

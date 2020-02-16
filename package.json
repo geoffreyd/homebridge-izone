@@ -9,16 +9,17 @@
   ],
   "scripts": {
     "start": "node dist/index.js",
-    "dev": "parcel watch src/index.ts --target node"
+    "dev": "parcel watch src/index.ts --target node",
+    "test": "qunit -c 'dist/index.js' -t tests/*-test.*"
   },
   "engines": {
-    "node": "11",
-    "homebridge": ">=0.2.0"
+    "node": "10"
   },
   "devDependencies": {
-    "@types/node": "^12.6.3",
+    "@types/node": "^10.0.0",
     "@types/node-fetch": "^2.3.7",
-    "typescript": "^3.5.3"
+    "node-qunit": "^1.0.0",
+    "typescript": "^3.7.5"
   },
   "dependencies": {
     "node-fetch": "^2.6.0"

@@ -13,6 +13,9 @@ export default class Discovery {
   controllerClass = Controller;
   public controllers: Controller[] = [];
 
+  public foundFirst: Promise<Controller>;
+  private foundResolve: (value: Controller) => void;
+
   constructor() {
     // Create udp server socket object.
     const discovery = this.discovery = dgram.createSocket("udp4");
@@ -26,6 +29,8 @@ export default class Discovery {
     heartBeat.bind(heartBeatPort);
 
     heartBeat.on('message', this.onHeartBeat.bind(this));
+
+    this.foundFirst = new Promise((resolve, _reject) => this.foundResolve = resolve);
   }
 
   onMessage(msgBuffer, rinfo) {
@@ -69,6 +74,11 @@ export default class Discovery {
     
     const controller = new Controller(ip, mac, modules);
     this.controllers.push(controller);
+
+    if (typeof this.foundResolve === "function") {
+      this.foundResolve(controller);
+      this.foundResolve = undefined;
+    }
   }
 
 }

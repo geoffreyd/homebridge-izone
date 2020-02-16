@@ -1,35 +1,74 @@
 import Discovery from './discovery';
-var Service, Characteristic;
+import Controller, { ControllerSettings } from './controller';
 
-export default function(homebridge) {
-  Service = homebridge.hap.Service;
-  Characteristic = homebridge.hap.Characteristic;
-  
-  homebridge.registerAccessory("homebridge-izone", "IZone", IZone);
-}
+export default class IZoneAPI {
 
-class IZone {
-  log: Function;
-  name: string;
+  discovery: Discovery;
+  ready: Promise<Controller>;
+  controller: Controller;
 
-  acService: any;
+  constructor() {
+    this.discovery = new Discovery();
 
-  constructor(log: Function, config: any) {
-    this.log = log;
-    this.name = config["name"];
-    const acService = new Service.HeaterCooler(this.name);
+    this.ready = this.discovery.foundFirst.then(controller => {
+      this.controller = controller
+      return controller.ready;
+    }).then(() => this.controller);
+  }
 
-    acService
-      .getCharacteristic(Characteristic.Active)
-      .on('get', this.getActiveState.bind(this) );
+  async getIP() {
+    const controller = await this.ready;
+    return controller.ip;
+  }
 
-    const discovery = new Discovery();
+  async getActiveZones() {
+    const controller = await this.ready;
+    return await controller.currentZones();
+  }
+
+  async currentSystem() {
+    return (await this.ready).currentSystem();
+  }
+  async system(property: string) {
+    return (await this.currentSystem())[property];
+  }
+
+  async getState() {
+    return this.system('SysOn');
+  }
+  async setOn() {
+    this.controller.toggleSystem("on");
+  }
+  async setOff() {
+    this.controller.toggleSystem("off");
+  }
+
+  async getHeaterCoolerState() {
+    return this.system('SysMode');
+  }
+
+  async setSystemMode(mode: ControllerSettings['SysMode']) {
+    return (await this.ready).setSystemMode(mode);
+  }
+
+  async getZoneTemp(zoneIdx: number) {
+    const zones = await (await this.ready).currentZones();
+    return zones.find(zone => zone.Index === zoneIdx).Temp;
+  }
+  async setZoneTarget(zoneIdx: number, target: number) {
+    return (await this.ready).setZoneTarget(zoneIdx.toString(), target.toString());
+  }
+
+  async getDuctTemp() {
+    return this.system('Temp');
+  }
+
+  async getACTarget() {
 
   }
 
-  getActiveState() {
-    Characteristic.Active.INACTIVE;
-    Characteristic.Active.ACTIVE;
+  async setACTarget(target) {
+
   }
 
 }

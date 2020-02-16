@@ -1,6 +1,8 @@
 import fetch from 'node-fetch';
 
-type ControllerSettings = {
+const UPDATE_CACHE = 30;
+
+export type ControllerSettings = {
   AirStreamDeviceUId: string,
   DeviceType: 'ASH',
   SysOn: 'on'|'off',
@@ -61,14 +63,19 @@ export default class Controller {
   settings: ControllerSettings;
   zones: ZoneSettings[] = [];
   private baseUrl: string;
+  private zonesUpdated: Date;
+  private systemUpdated: Date;
   
+  public ready: Promise<void>;
+
+
   constructor(
     public ip: string,
     public id: string,
     public modules: string[]
   ) {
-    this.setup();
-    this.baseUrl = `http://ip`;
+    this.baseUrl = `http://${ip}`;
+    this.ready = this.setup();
   }
   
   async setup() {
@@ -76,14 +83,25 @@ export default class Controller {
     await this.getZoneSettings();
   }
 
-  async getSystemSettings() {
+  private async getSystemSettings() {
+    // console.log("THIS:", this);
+    // console.log("Fetching data from", `${this.baseUrl}/SystemSettings`);
     const sysRequest = await fetch(`${this.baseUrl}/SystemSettings`);
     const sysSettings = await sysRequest.json()
-    console.log("System settings", sysSettings);
+    // console.log("System settings", sysSettings);
     this.settings = sysSettings;
+    this.systemUpdated = new Date();
   }
 
-  async getZoneSettings() {
+  public async currentSystem() {
+    const currentTime = new Date();
+    if (!this.systemUpdated || (currentTime.valueOf() - this.systemUpdated.valueOf()) / 1000 >  UPDATE_CACHE) {
+      await this.getSystemSettings();
+    }
+    return this.settings;
+  }
+
+  private async getZoneSettings() {
     const noOfZones = this.settings.NoOfZones;
     const zoneRequest = await this.get('Zones1_4');
     let zoneSettings: ZoneSettings[] = await zoneRequest.json();
@@ -96,7 +114,16 @@ export default class Controller {
       zoneSettings = zoneSettings.concat(await zoneRequest.json());
     }
     this.zones = zoneSettings.filter((zone) => zone.Index < noOfZones);
-    console.log("Zome Settings", this.zones);
+    // console.log("Zome Settings", this.zones);
+    this.zonesUpdated = new Date();
+  }
+
+  async currentZones() {
+    const currentTime = new Date();
+    if (!this.zonesUpdated || (currentTime.valueOf() - this.zonesUpdated.valueOf()) / 1000 >  UPDATE_CACHE) {
+      await this.getZoneSettings();
+    }
+    return this.zones;
   }
 
   async getSchedualSettings() {
@@ -106,10 +133,25 @@ export default class Controller {
   /*
    * COMMANDS
    */
-  async toggleSystem() {
-    const toState = this.settings.SysOn == "on" ? "off" : "on"
+  async toggleSystem(setTo?: ControllerSettings['SysOn']) {
+    const toState = setTo || this.settings.SysOn == "on" ? "off" : "on"
     await this.post('SystemON', {
       SystemOn: toState
+    });
+  }
+
+  async setSystemMode(mode: ControllerSettings['SysMode']){
+    return this.post('SystemMODE', {
+      "SystemMODE": mode
+    });
+  }
+
+  async setZoneTarget(zone: string, state: string) {
+    return this.post('ZoneCommand',  {
+      "ZoneCommand": {
+        "ZoneNo": zone,
+        "Command": state
+      }
     });
   }
 

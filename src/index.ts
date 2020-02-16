@@ -55,8 +55,25 @@ export default class IZoneAPI {
     const zones = await (await this.ready).currentZones();
     return zones.find(zone => zone.Index === zoneIdx).Temp;
   }
+  async getZoneTarget(zoneIdx: number) {
+    const zones = await (await this.ready).currentZones();
+    const zone = zones.find(zone => zone.Index === zoneIdx);
+
+    var temperature = zone.SetPoint;
+    var state = zone.Mode; //open,close,auto
+    if(state == 'auto') {
+      return temperature;
+    } else {
+      return state;
+    }
+  }
   async setZoneTarget(zoneIdx: number, target: number) {
     return (await this.ready).setZoneTarget(zoneIdx.toString(), target.toString());
+  }
+
+  async getZoneTargetTemperature(zoneIdx: number) {
+    const zones = await (await this.ready).currentZones();
+    return zones.find(zone => zone.Index === zoneIdx).SetPoint;
   }
 
   async getDuctTemp() {

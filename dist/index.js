@@ -1008,6 +1008,47 @@ function () {
     });
   };
 
+  IZoneAPI.prototype.getZoneTarget = function (zoneIdx) {
+    return __awaiter(this, void 0, void 0, function () {
+      var zones, zone, temperature, state;
+      return __generator(this, function (_a) {
+        switch (_a.label) {
+          case 0:
+            return [4
+            /*yield*/
+            , this.ready];
+
+          case 1:
+            return [4
+            /*yield*/
+            , _a.sent().currentZones()];
+
+          case 2:
+            zones = _a.sent();
+            zone = zones.find(function (zone) {
+              return zone.Index === zoneIdx;
+            });
+            temperature = zone.SetPoint;
+            state = zone.Mode;
+
+            if (state == 'auto') {
+              return [2
+              /*return*/
+              , temperature];
+            } else {
+              return [2
+              /*return*/
+              , state];
+            }
+
+            return [2
+            /*return*/
+            ];
+        }
+      });
+    });
+  };
+
   IZoneAPI.prototype.setZoneTarget = function (zoneIdx, target) {
     return __awaiter(this, void 0, void 0, function () {
       return __generator(this, function (_a) {
@@ -1021,6 +1062,33 @@ function () {
             return [2
             /*return*/
             , _a.sent().setZoneTarget(zoneIdx.toString(), target.toString())];
+        }
+      });
+    });
+  };
+
+  IZoneAPI.prototype.getZoneTargetTemperature = function (zoneIdx) {
+    return __awaiter(this, void 0, void 0, function () {
+      var zones;
+      return __generator(this, function (_a) {
+        switch (_a.label) {
+          case 0:
+            return [4
+            /*yield*/
+            , this.ready];
+
+          case 1:
+            return [4
+            /*yield*/
+            , _a.sent().currentZones()];
+
+          case 2:
+            zones = _a.sent();
+            return [2
+            /*return*/
+            , zones.find(function (zone) {
+              return zone.Index === zoneIdx;
+            }).SetPoint];
         }
       });
     });
